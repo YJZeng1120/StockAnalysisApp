@@ -26,13 +26,22 @@ enum GeminiError: LocalizedError {
 class GeminiService {
     private let apiKey: String
     private let baseURL =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
     private var conversationHistory: [[String: Any]] = []
-    private let stockService = StockService()
+    private let mcpService = MCPService()
 
     private let systemInstruction = """
         你是一個專業的股票分析助理，請用繁體中文回答。
-        當用戶詢問特定股票時，使用 get_stock_quote 工具取得即時資料再分析。
+        當用戶詢問特定股票時，請根據問題類型選擇適合的工具取得資料後再分析：
+        - get_stock_price：取得最新股價（快速報價）
+        - get_valuation_analysis：估值分析（P/E、Graham Number、PEG 等，判斷是否高估）
+        - get_technical_indicators：技術指標（MA50/MA200、RSI、52 週高低，判斷趨勢）
+        - get_fundamental_health：基本面健康度（營收成長、EPS、毛利率、現金流）
+        - get_dividend_info：股息分析（殖利率、配息率、配息歷史）
+        - get_earnings_call_summary：法說會摘要（EPS 達標、分析師預估、目標價）
+        - get_institutional_trading：機構法人持股（三大法人買賣超）
+        - get_volume_analysis：交易量與散戶／法人動向分析
+        - get_stock_report：綜合投資報告（整合所有面向，適合全面分析）
         在回答結尾提醒：投資有風險，以上分析僅供參考。
         """
 
@@ -40,20 +49,131 @@ class GeminiService {
         [
             "function_declarations": [
                 [
-                    "name": "get_stock_quote",
-                    "description": "取得股票的即時報價資訊，包含股價、漲跌幅、成交量等",
+                    "name": "get_stock_price",
+                    "description": "取得股票最新即時價格",
                     "parameters": [
                         "type": "object",
                         "properties": [
-                            "symbol": [
+                            "ticker": [
                                 "type": "string",
-                                "description":
-                                    "股票代號，例如美股 AAPL、TSLA，台股 2330.TW，港股 9988.HK",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW、9988.HK",
                             ]
                         ],
-                        "required": ["symbol"],
+                        "required": ["ticker"],
                     ],
-                ]
+                ],
+                [
+                    "name": "get_valuation_analysis",
+                    "description": "估值分析：判斷股票目前是否被高估，包含 P/E 歷史百分位、Graham Number、Forward/Trailing P/E 比較、PEG Ratio",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_technical_indicators",
+                    "description": "技術指標分析：MA50/MA200 均線、RSI、52 週高低價，判斷目前趨勢與超買超賣狀態",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_fundamental_health",
+                    "description": "基本面健康度分析：營收成長、EPS、毛利率、現金流等財務指標",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_dividend_info",
+                    "description": "股息分析：殖利率、配息率、歷史配息紀錄",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_earnings_call_summary",
+                    "description": "法說會摘要：EPS 達標情況、分析師預估、目標價區間",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_institutional_trading",
+                    "description": "機構法人持股分析：三大法人買賣超、機構持股比例變化",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_volume_analysis",
+                    "description": "交易量分析：成交量趨勢、散戶與法人動向研判",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
+                [
+                    "name": "get_stock_report",
+                    "description": "綜合投資報告：整合股價、估值、技術、基本面、股息等所有面向，適合需要全面分析時使用",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "ticker": [
+                                "type": "string",
+                                "description": "股票代號，例如 AAPL、TSLA、2330.TW",
+                            ]
+                        ],
+                        "required": ["ticker"],
+                    ],
+                ],
             ]
         ]
     ]
@@ -191,32 +311,36 @@ class GeminiService {
     private func executeFunction(name: String, args: [String: Any]) async
         -> [String: Any]
     {
-        switch name {
-        case "get_stock_quote":
-            guard let symbol = args["symbol"] as? String else {
-                return ["error": "缺少 symbol 參數"]
-            }
-            return await fetchStockQuote(symbol: symbol)
-        default:
+        let mcpTools: Set<String> = [
+            "get_stock_price",
+            "get_valuation_analysis",
+            "get_technical_indicators",
+            "get_fundamental_health",
+            "get_dividend_info",
+            "get_earnings_call_summary",
+            "get_institutional_trading",
+            "get_volume_analysis",
+            "get_stock_report",
+        ]
+
+        guard mcpTools.contains(name) else {
             return ["error": "未知的函式：\(name)"]
         }
+
+        guard let ticker = args["ticker"] as? String else {
+            return ["error": "缺少 ticker 參數"]
+        }
+
+        return await callMCPTool(name: name, ticker: ticker)
     }
 
-    private func fetchStockQuote(symbol: String) async -> [String: Any] {
+    private func callMCPTool(name: String, ticker: String) async -> [String: Any] {
         do {
-            let quote = try await stockService.getStockQuote(symbol: symbol)
-            var result: [String: Any] = [
-                "symbol": quote.symbol,
-                "name": quote.name,
-                "price": quote.price,
-                "change": quote.change,
-                "changePercent": String(format: "%.2f%%", quote.changePercent),
-                "volume": quote.volume,
-            ]
-            if let marketCap = quote.marketCap {
-                result["marketCap"] = marketCap
-            }
-            return result
+            let text = try await mcpService.callTool(
+                name: name,
+                arguments: ["ticker": ticker]
+            )
+            return ["result": text]
         } catch {
             return ["error": error.localizedDescription]
         }

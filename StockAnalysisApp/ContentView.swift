@@ -5,9 +5,17 @@
 //  Created by crystal.zeng on 2026/3/5.
 //
 
+import FirebaseAI
 import SwiftUI
 
 struct ContentView: View {
+    let model = FirebaseAI.firebaseAI(backend: .googleAI()).generativeModel(
+        modelName: "gemini-2.5-flash"
+    )
+    @State private var userPrompt: String = ""
+    @State private var aiResponse: String = ""
+    @State private var isLoading: Bool = false
+    
     @State private var viewModel: ChatViewModel
     @FocusState private var isTextFieldFocused: Bool
 
@@ -148,7 +156,9 @@ struct LoadingBubble: View {
                         .frame(width: 8, height: 8)
                         .scaleEffect(phases[index] ? 1.3 : 0.7)
                         .animation(
-                            .easeInOut(duration: 0.45).repeatForever(autoreverses: true),
+                            .easeInOut(duration: 0.45).repeatForever(
+                                autoreverses: true
+                            ),
                             value: phases[index]
                         )
                 }
@@ -162,7 +172,9 @@ struct LoadingBubble: View {
         }
         .onAppear {
             for index in 0..<3 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.15) {
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + Double(index) * 0.15
+                ) {
                     phases[index] = true
                 }
             }
