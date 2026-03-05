@@ -41,7 +41,7 @@ class StockService {
             throw StockError.invalidSymbol
         }
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 30)
         request.setValue(
             "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15",
             forHTTPHeaderField: "User-Agent"
@@ -55,9 +55,12 @@ class StockService {
             throw StockError.networkError(error)
         }
 
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200
-        else {
-            throw StockError.notFound
+        if let http = response as? HTTPURLResponse {
+            switch http.statusCode {
+            case 200: break
+            case 404: throw StockError.notFound
+            default: throw StockError.networkError(URLError(.badServerResponse))
+            }
         }
 
         return try parseResponse(data: data, symbol: symbol)
@@ -76,7 +79,9 @@ class StockService {
             throw StockError.parseError
         }
 
-        let price = (meta["regularMarketPrice"] as? Double) ?? 0
+        guard let price = meta["regularMarketPrice"] as? Double, price > 0 else {
+            throw StockError.parseError
+        }
         let previousClose = (meta["chartPreviousClose"] as? Double) ?? price
         let change = price - previousClose
         let changePercent =

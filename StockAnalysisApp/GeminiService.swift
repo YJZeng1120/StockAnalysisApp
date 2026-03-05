@@ -2,7 +2,7 @@ import Foundation
 
 enum GeminiError: LocalizedError {
     case missingAPIKey
-    case networkError
+    case networkError(Error)
     case invalidResponse
     case apiError(Int, String)
     case tooManyFunctionCalls
@@ -11,8 +11,8 @@ enum GeminiError: LocalizedError {
         switch self {
         case .missingAPIKey:
             return "未設定 Gemini API Key。請在 Xcode Scheme 的環境變數中加入 GEMINI_API_KEY。"
-        case .networkError:
-            return "網路連線失敗"
+        case .networkError(let error):
+            return "網路連線失敗：\(error.localizedDescription)"
         case .invalidResponse:
             return "收到無效的 API 回應"
         case .apiError(let code, let message):
@@ -71,13 +71,14 @@ class GeminiService {
             "role": "user",
             "parts": [["text": text]],
         ]
+        let snapshotCount = conversationHistory.count
         conversationHistory.append(userContent)
 
         do {
             return try await sendAndProcess(depth: 0)
         } catch {
-            // Remove the user message on failure to keep history consistent
-            conversationHistory.removeLast()
+            // Roll back all history entries added during this request
+            conversationHistory.removeSubrange(snapshotCount...)
             throw error
         }
     }
@@ -139,8 +140,8 @@ class GeminiService {
     }
 
     private func callGeminiAPI() async throws -> [String: Any] {
-        guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
-            throw GeminiError.networkError
+        guard let url = URL(string: baseURL) else {
+            throw GeminiError.networkError(URLError(.badURL))
         }
 
         let requestBody: [String: Any] = [
@@ -153,9 +154,10 @@ class GeminiService {
 
         let bodyData = try JSONSerialization.data(withJSONObject: requestBody)
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = bodyData
 
         let data: Data
@@ -163,11 +165,11 @@ class GeminiService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            throw GeminiError.networkError
+            throw GeminiError.networkError(error)
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw GeminiError.networkError
+            throw GeminiError.networkError(URLError(.badServerResponse))
         }
 
         guard http.statusCode == 200 else {
