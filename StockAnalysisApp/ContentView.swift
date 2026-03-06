@@ -5,17 +5,9 @@
 //  Created by crystal.zeng on 2026/3/5.
 //
 
-import FirebaseAI
 import SwiftUI
 
 struct ContentView: View {
-    let model = FirebaseAI.firebaseAI(backend: .googleAI()).generativeModel(
-        modelName: "gemini-2.5-flash"
-    )
-    @State private var userPrompt: String = ""
-    @State private var aiResponse: String = ""
-    @State private var isLoading: Bool = false
-    
     @State private var viewModel: ChatViewModel
     @FocusState private var isTextFieldFocused: Bool
 
