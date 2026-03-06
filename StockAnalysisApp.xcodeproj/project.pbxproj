@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BA3D06C72F59756C001AD302 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = BA3D06C62F59756C001AD302 /* FirebaseAI */; };
+		BA3D06CA2F59756C001AD302 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = BA3D06C92F59756C001AD302 /* MarkdownUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BA3D06C72F59756C001AD302 /* FirebaseAI in Frameworks */,
+				BA3D06CA2F59756C001AD302 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = StockAnalysisApp;
 			packageProductDependencies = (
 				BA3D06C62F59756C001AD302 /* FirebaseAI */,
+				BA3D06C92F59756C001AD302 /* MarkdownUI */,
 			);
 			productName = StockAnalysisApp;
 			productReference = BA3F917D2F5914EF00AF0B93 /* StockAnalysisApp.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				BA3D06C52F59756C001AD302 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				BA3D06C82F59756C001AD302 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BA3F917E2F5914EF00AF0B93 /* Products */;
@@ -351,6 +355,14 @@
 				minimumVersion = 12.10.0;
 			};
 		};
+		BA3D06C82F59756C001AD302 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -358,6 +370,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BA3D06C52F59756C001AD302 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAI;
+		};
+		BA3D06C92F59756C001AD302 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BA3D06C82F59756C001AD302 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

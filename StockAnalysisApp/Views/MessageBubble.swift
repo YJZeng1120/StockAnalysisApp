@@ -1,4 +1,5 @@
 import SwiftUI
+import MarkdownUI
 
 struct MessageBubble: View {
     let message: ChatMessage
@@ -9,13 +10,23 @@ struct MessageBubble: View {
         HStack(alignment: .bottom, spacing: 8) {
             if isUser { Spacer(minLength: 48) }
 
-            Text(message.content)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(isUser ? Color.blue : Color(.systemGray5))
-                .foregroundStyle(isUser ? .white : .primary)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .textSelection(.enabled)
+            if isUser {
+                Text(message.content)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color.blue)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .textSelection(.enabled)
+            } else {
+                Markdown(message.content)
+                    .markdownTheme(.basic)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .textSelection(.enabled)
+            }
 
             if !isUser { Spacer(minLength: 48) }
         }
