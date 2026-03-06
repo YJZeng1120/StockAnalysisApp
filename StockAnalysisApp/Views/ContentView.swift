@@ -17,13 +17,15 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                messageListView
-                Divider()
-                inputBarView
-            }
-            .navigationTitle("股票分析 AI")
-            .navigationBarTitleDisplayMode(.inline)
+            messageListView
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    VStack(spacing: 0) {
+                        Divider()
+                        inputBarView
+                    }
+                }
+                .navigationTitle("股票分析 AI")
+                .navigationBarTitleDisplayMode(.inline)
         }
     }
 
@@ -38,7 +40,9 @@ struct ContentView: View {
                             .id(message.id)
                     }
 
-                    if viewModel.isLoading {
+                    if viewModel.isLoading
+                        && viewModel.streamingMessageId == nil
+                    {
                         LoadingBubble()
                             .id("loading")
                     }
@@ -47,29 +51,16 @@ struct ContentView: View {
                 .padding(.vertical, 8)
             }
             .onChange(of: viewModel.messages.count) { _, _ in
-                scrollToBottom(proxy: proxy)
-            }
-            .onChange(of: viewModel.isLoading) { _, _ in
-                scrollToBottom(proxy: proxy)
-            }
-            .onTapGesture {
-                isTextFieldFocused = false
-            }
-        }
-    }
-
-    private func scrollToBottom(proxy: ScrollViewProxy) {
-        withAnimation(.easeOut(duration: 0.3)) {
-            if viewModel.isLoading {
-                proxy.scrollTo("loading", anchor: .bottom)
-            } else if let lastId = viewModel.messages.last?.id {
-                proxy.scrollTo(lastId, anchor: .bottom)
+                if let lastId = viewModel.messages.last?.id {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        proxy.scrollTo(lastId, anchor: .top)
+                    }
+                }
             }
         }
     }
 
     // MARK: - Input Bar
-
     private var inputBarView: some View {
         HStack(alignment: .bottom, spacing: 10) {
             TextField("輸入問題...", text: $viewModel.inputText, axis: .vertical)
@@ -78,11 +69,11 @@ struct ContentView: View {
                 .focused($isTextFieldFocused)
                 .disabled(viewModel.isLoading)
                 .onSubmit {
-                    Task { await viewModel.sendMessage() }
+                    handleSend()
                 }
 
             Button {
-                Task { await viewModel.sendMessage() }
+                handleSend()
             } label: {
                 Group {
                     if viewModel.isLoading {
@@ -100,6 +91,20 @@ struct ContentView: View {
         .padding(.horizontal)
         .padding(.vertical, 10)
         .background(.regularMaterial)
+    }
+
+    // MARK: - Helper Methods
+
+    private func handleSend() {
+        guard !isSendDisabled else { return }
+
+        // 1. 立即收起鍵盤，避免後續 Layout 重算跳動
+        isTextFieldFocused = false
+
+        // 2. 執行發送邏輯
+        Task {
+            await viewModel.sendMessage()
+        }
     }
 
     private var isSendDisabled: Bool {

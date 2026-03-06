@@ -28,7 +28,7 @@ class GeminiService {
 
     init() {
         let model = FirebaseAI.firebaseAI(backend: .googleAI()).generativeModel(
-            modelName: "gemini-2.5-flash-lite",
+            modelName: "gemini-2.5-flash",
             systemInstruction: ModelContent(
                 role: "system",
                 parts: GeminiService.systemPrompt
@@ -43,5 +43,23 @@ class GeminiService {
             throw GeminiError.invalidResponse
         }
         return text.isEmpty ? "無法取得回應，請重試。" : text
+    }
+
+    func sendMessageStream(_ text: String) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    let stream = try chat.sendMessageStream(text)
+                    for try await response in stream {
+                        if let chunk = response.text {
+                            continuation.yield(chunk)
+                        }
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
 }

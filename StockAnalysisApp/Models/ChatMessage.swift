@@ -3,7 +3,7 @@ import Foundation
 struct ChatMessage: Identifiable {
     let id = UUID()
     let role: MessageRole
-    let content: String
+    var content: String
 }
 
 enum MessageRole {

@@ -6,6 +6,8 @@ class ChatViewModel {
     var messages: [ChatMessage] = []
     var inputText: String = ""
     var isLoading: Bool = false
+    var streamingMessageId: UUID? = nil
+    var streamingToken: Int = 0
 
     private let geminiService = GeminiService()
 
@@ -27,18 +29,25 @@ class ChatViewModel {
         messages.append(ChatMessage(role: .user, content: text))
         isLoading = true
 
+        let assistantMessage = ChatMessage(role: .assistant, content: "")
+        messages.append(assistantMessage)
+        streamingMessageId = assistantMessage.id
+
         do {
-            let response = try await geminiService.sendMessage(text)
-            messages.append(ChatMessage(role: .assistant, content: response))
+            let stream = geminiService.sendMessageStream(text)
+            for try await chunk in stream {
+                if let idx = messages.firstIndex(where: { $0.id == streamingMessageId }) {
+                    messages[idx].content += chunk
+                    streamingToken += 1
+                }
+            }
         } catch {
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    content: "發生錯誤：\(error.localizedDescription)"
-                )
-            )
+            if let idx = messages.firstIndex(where: { $0.id == streamingMessageId }) {
+                messages[idx].content = "發生錯誤：\(error.localizedDescription)"
+            }
         }
 
+        streamingMessageId = nil
         isLoading = false
     }
 }
