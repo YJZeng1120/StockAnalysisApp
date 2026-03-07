@@ -1,3 +1,4 @@
 firebase-debug.log
 xcuserdata/
 *.xcuserstate
+**/GoogleService-Info.plist
