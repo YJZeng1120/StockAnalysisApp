@@ -4,7 +4,7 @@
 
 ## Demo
 
-[![Demo Video](https://img.youtube.com/vi/EOdHvHCqK5s/0.jpg)](https://youtube.com/shorts/EOdHvHCqK5s)
+[![Demo Video](https://img.youtube.com/vi/oVEhD4r3inM/0.jpg)](https://youtube.com/shorts/oVEhD4r3inM?feature=share)
 
 ## 功能
 

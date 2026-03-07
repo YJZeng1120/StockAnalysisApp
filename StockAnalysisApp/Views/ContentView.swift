@@ -40,12 +40,6 @@ struct ContentView: View {
                             .id(message.id)
                     }
 
-                    if viewModel.isLoading
-                        && viewModel.streamingMessageId == nil
-                    {
-                        LoadingBubble()
-                            .id("loading")
-                    }
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 8)
