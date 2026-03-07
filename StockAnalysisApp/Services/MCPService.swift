@@ -60,7 +60,7 @@ class MCPService {
     private let timeoutInterval: TimeInterval = 60
     private var requestID: Int = 0
 
-    init(baseURL: String = "http://127.0.0.1:8000/mcp") {
+    init(baseURL: String = "https://jeff-unfatherly-trang.ngrok-free.dev/mcp") {
         self.baseURL = baseURL
     }
 
