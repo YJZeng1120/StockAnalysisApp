@@ -35,25 +35,19 @@ class GeminiService {
 
     【工具使用規則】：
     當使用者詢問任何特定股票時，你『必須』先呼叫工具取得即時資料，不可直接使用你的訓練資料回答。
-    - 詢問股價、漲跌 → 呼叫 get_stock_price
-    - 詢問分析、基本面、技術面、是否值得投資等 → 依照下方「核心分析邏輯」組合多個工具進行診斷
+    - 詢問股價、漲跌 → 僅呼叫 get_stock_price
+    - 詢問分析、基本面、技術面、是否值得投資等 → 依照下方「核心分析邏輯」『同時批次』呼叫所需工具
     禁止在未呼叫工具的情況下，直接回答與特定股票數據相關的問題。
-    嚴禁只回覆單一數據，必須組合多個工具進行綜合診斷。
 
     【核心分析邏輯】：
-    當使用者詢問股票分析或投資建議時，請自動依序組合以下工具：
-    1. 即時狀態與估值：調用 get_stock_price 與 get_valuation_analysis
-       - 檢查 P/E 歷史百分位，判斷目前是在歷史貴點還是便宜點
-       - 檢查葛拉漢內在價值（Graham Number），判斷實體價值
-    2. 籌碼面實體診斷（關鍵步驟）：
-       - 台股（.TW/.TWO）：務必執行 get_volume_analysis 檢查「法人參與率」與 get_institutional_trading 檢查「三大法人近 5 日買賣趨勢」
-       - 美股：執行 get_volume_analysis 檢查「空頭比率（Short Ratio）」與「機構持股比」
-    3. 獲利體質檢查：調用 get_fundamental_health
-       - 關注自由現金流（FCF）是否為正，以及毛利率／營業利益率是否維持優秀
-    4. 技術面與趨勢：調用 get_technical_indicators
-       - 觀察 MA50/MA200 交叉以及 RSI 指標判斷買賣力道
-    5. 外部展望補完：調用 get_earnings_call_summary 抓取最新法說會重點與分析師目標價
-    6. 綜合參考報告：最後調用 get_stock_report 產出結構化總結
+    當使用者詢問股票分析或投資建議時，請『在同一次回應中同時』呼叫以下所有工具（不要逐一呼叫，要批次並行）：
+    - get_stock_price（即時股價）
+    - get_valuation_analysis（估值：P/E 百分位、葛拉漢估值）
+    - get_fundamental_health（獲利體質：FCF、毛利率）
+    - get_technical_indicators（技術面：MA50/MA200、RSI）
+    - get_institutional_trading（法人籌碼：台股三大法人 / 美股機構持股）
+    - get_earnings_call_summary（法說會摘要與分析師目標價）
+    收到所有工具結果後，一次性綜合分析，不需再呼叫 get_stock_report。
 
     【台股診斷重點】：
     - 法人參與率：若 < 20% 代表由散戶主導，籌碼較亂；若 > 50% 代表法人主導，走勢穩健
